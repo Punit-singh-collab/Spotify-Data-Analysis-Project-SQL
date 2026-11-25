@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spotify SQL Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&family=Source+Serif+4:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef0f6; --surface:#ffffff; --ink:#15182e; --muted:#5a6080; --line:#d5d9e8;
+  --accent:#d6286f; --accent-ink:#ffffff; --code-bg:#14172b; --code-ink:#e6e8f5;
+  --k:#ff7ab2; --s:#8fe3c0; --n:#ffd479; --c:#7c84ab; --f:#9bb7ff;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10122200; --bg:#101222; --surface:#181b30; --ink:#eceefb; --muted:#9aa1c4; --line:#2b3050;
+    --accent:#ff5c9e; --accent-ink:#1a0610; --code-bg:#0b0d1a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101222; --surface:#181b30; --ink:#eceefb; --muted:#9aa1c4; --line:#2b3050;
+  --accent:#ff5c9e; --accent-ink:#1a0610; --code-bg:#0b0d1a; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "Source Serif 4",Georgia,serif}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+h1,h2,h3,.sans{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif}
+header{padding:56px 0 28px}
+h1{font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;margin:0 0 16px;font-weight:800;letter-spacing:-.03em}
+header p{max-width:60ch;color:var(--muted);margin:0 0 28px}
+.eq{display:flex;align-items:flex-end;gap:6px;height:96px;margin-bottom:10px}
+.eq a{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-width:6px;text-decoration:none;opacity:.85;transition:opacity .15s,transform .15s;transform-origin:bottom}
+.eq a:hover,.eq a:focus-visible{opacity:1;transform:scaleY(1.08);outline:2px solid var(--ink);outline-offset:2px}
+.eqcap{font-size:.85rem;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:26px 0 0;padding:0;list-style:none;font-size:.95rem}
+.stats b{font-family:"Bricolage Grotesque",sans-serif;font-size:1.5rem;display:block;line-height:1.1}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.bar .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+input[type=search]{flex:1 1 220px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:.95rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font:500 .85rem "Bricolage Grotesque",sans-serif;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding:22px 0 40px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;scroll-margin-top:90px}
+summary{cursor:pointer;padding:14px 18px;display:flex;gap:14px;align-items:baseline;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";margin-left:auto;color:var(--muted);font:500 1.3rem "Bricolage Grotesque",sans-serif}
+details[open] summary::after{content:"–"}
+summary .t{font:500 1.05rem/1.3 "Bricolage Grotesque",sans-serif}
+.tag{font:500 .75rem "Bricolage Grotesque",sans-serif;padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.body{padding:0 18px 18px}
+.body p{margin:0 0 12px;color:var(--muted);font-size:.95rem}
+.codewrap{position:relative}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);padding:16px;border-radius:8px;overflow-x:auto;font:.84rem/1.6 "JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+.copy{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:4px 12px;font:500 .8rem "Bricolage Grotesque",sans-serif;cursor:pointer}
+.k{color:var(--k)}.s{color:var(--s)}.n{color:var(--n)}.c{color:var(--c)}.f{color:var(--f)}
+section.schema{padding:8px 0 28px}section.schema h2{font-size:1.5rem;margin:0 0 6px}section.schema>p{color:var(--muted);margin:0 0 14px}.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.92rem;background:var(--surface);border:1px solid var(--line)}th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}th{font:500 .85rem "Bricolage Grotesque",sans-serif;color:var(--muted)}td:first-child{font-family:"Bricolage Grotesque",sans-serif;font-weight:500;white-space:nowrap}td code{display:inline-block;margin:2px 2px 2px 0}.meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin-top:16px}@media(max-width:560px){.meta{grid-template-columns:1fr}}.body h4{font:500 .9rem "Bricolage Grotesque",sans-serif;margin:16px 0 4px}.body ol{margin:0 0 12px;padding-left:22px;font-size:.95rem}.body li{margin-bottom:3px}.tip{border-left:3px solid var(--accent);padding-left:12px;color:var(--ink)!important}.empty{padding:30px;text-align:center;color:var(--muted)}
+section.notes{border-left:4px solid var(--accent);padding:4px 0 4px 20px;margin:12px 0 56px}
+section.notes h2{margin:0 0 8px;font-size:1.4rem}
+section.notes li{margin-bottom:8px}
+code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.85em;background:var(--surface);border:1px solid var(--line);padding:1px 6px;border-radius:4px}
+footer{padding:0 0 40px;color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Spotify &amp; YouTube,<br>asked in SQL</h1>
+  <p>A walkthrough of 16 queries from the <code>spotify_db</code> project, each with a step-by-step breakdown, what it returns, a tip and, where useful, an improved version. They run on one table of tracks, with audio features from Spotify and view and like counts from YouTube.</p>
+  <div class="eq" id="eq" role="navigation" aria-label="Jump to a query"></div>
+  <div class="eqcap">Each bar is a query. Taller bars are harder. Select one to jump to it.</div>
+  <ul class="stats">
+    <li><b>1</b>table</li>
+    <li><b>24</b>columns</li>
+    <li><b>16</b>queries</li>
+    <li><b>3</b>window-function queries</li>
+  </ul>
+</header>
+</div>
+
+<div class="wrap"><section class="schema"><h2>The table</h2><p>Everything lives in one table, <code>spotify</code>. Each row is a track, joined to its matching YouTube video.</p><div class="tw"><table><thead><tr><th>Group</th><th>Columns</th><th>What they hold</th></tr></thead><tbody><tr><td>Track info</td><td><code>artist</code> <code>track</code> <code>album</code> <code>album_type</code></td><td>Who made the track and how it was released, such as a single or an album.</td></tr><tr><td>Audio features</td><td><code>danceability</code> <code>energy</code> <code>loudness</code> <code>speechiness</code> <code>acousticness</code> <code>instrumentalness</code> <code>liveness</code> <code>valence</code> <code>tempo</code> <code>duration_min</code></td><td>Spotify’s measures of how a track sounds. Most run from 0 to 1. Loudness is in decibels, tempo in beats per minute and duration in minutes.</td></tr><tr><td>YouTube stats</td><td><code>title</code> <code>channel</code> <code>views</code> <code>likes</code> <code>comments</code> <code>licensed</code> <code>official_video</code></td><td>The matching video. <code>licensed</code> and <code>official_video</code> are stored as text, not true or false values.</td></tr><tr><td>Plays</td><td><code>stream</code> <code>most_playedon</code> <code>energy_liveness</code></td><td>Spotify stream count, the platform with more plays, and a derived energy and liveness value.</td></tr></tbody></table></div></section></div>
+<div class="bar"><div class="wrap row">
+  <input type="search" id="q" placeholder="Search queries, e.g. artist, energy, rank" aria-label="Search queries">
+  <div class="chips" id="chips"></div>
+</div></div>
+
+<div class="wrap">
+<main id="list"></main>
+
+<section class="notes">
+  <h2>Things to check before you run these</h2>
+  <ul>
+    <li>Query 2 is labelled “more than 1 billion streams” but filters on <code>stream &gt; 1000000</code>. Use <code>1000000000</code> to match the label.</li>
+    <li>Query 4 writes <code>sum (comments)</code> with a space. MySQL rejects that by default, so write <code>sum(comments)</code>.</li>
+    <li>Queries 4 and 9 compare to <code>'True'</code>. String comparison in MySQL ignores case, but check how the CSV stores the values.</li>
+    <li>Query 9 compares <code>views &gt; likes</code>. Nearly every video has more views than likes, so this returns almost everything.</li>
+    <li>Query 14 relies on <code>most_playedon</code> being exactly <code>youtube</code> or <code>spotify</code>.</li>
+  </ul>
+</section>
+<footer>Created from spotify_db.sql</footer>
+</div>
+
+<script>
+var Q=[
+{t:"Count all rows",c:"Basics",d:1,p:"Sanity check after loading the data.",s:"select count(*)\nfrom spotify;"},
+{t:"Tracks with more than 1 billion streams",c:"Basics",d:1,p:"Simple filter on the stream count.",s:"select *\nfrom spotify\nwhere stream > 1000000;"},
+{t:"Albums with their artists",c:"Basics",d:1,p:"DISTINCT removes repeated artist and album pairs.",s:"select distinct artist, album\nfrom spotify;"},
+{t:"Total comments on licensed tracks",c:"Aggregation",d:2,p:"Adds up comments where licensed is true.",s:"select sum(comments)\nfrom spotify\nwhere licensed = 'True';"},
+{t:"All tracks from singles",c:"Basics",d:1,p:"Filters on album_type.",s:"select *\nfrom spotify\nwhere album_type = 'single';"},
+{t:"Number of tracks per artist",c:"Aggregation",d:2,p:"GROUP BY with COUNT.",s:"select artist, count(*)\nfrom spotify\ngroup by artist;"},
+{t:"Average danceability per album",c:"Aggregation",d:2,p:"GROUP BY with AVG.",s:"select album, avg(danceability)\nfrom spotify\ngroup by album;"},
+{t:"Top 5 tracks by energy",c:"Window functions",d:4,p:"RANK() orders tracks by energy. A CTE keeps the top five ranks.",s:"with my_cte as (\n  select *,\n    rank() over (order by energy desc) as my_rank\n  from spotify\n)\nselect *\nfrom my_cte\nwhere my_rank <= 5;"},
+{t:"Official videos with more views than likes",c:"Basics",d:2,p:"Combines two conditions with AND.",s:"select *\nfrom spotify\nwhere views > likes and official_video = 'True';"},
+{t:"Tracks with above-average liveness",c:"Subqueries",d:3,p:"A subquery computes the overall average.",s:"select *\nfrom spotify\nwhere liveness > (select avg(liveness) from spotify);"},
+{t:"Energy range per artist",c:"Aggregation",d:3,p:"Highest, lowest and the gap between them for each artist.",s:"select artist, max(energy), min(energy),\n  max(energy) - min(energy) as difference\nfrom spotify\ngroup by artist;"},
+{t:"Tracks with energy_liveness above 1.2",c:"Basics",d:1,p:"Filters on a precomputed ratio column.",s:"select *\nfrom spotify\nwhere energy_liveness > 1.2;"},
+{t:"Top 3 most viewed tracks per artist",c:"Window functions",d:5,p:"DENSE_RANK() restarts for each artist, so ties share a rank and no rank is skipped.",s:"with my_cte as (\n  select *,\n    dense_rank() over (partition by artist order by views desc) as my_rank\n  from spotify\n)\nselect *\nfrom my_cte\nwhere my_rank <= 3;"},
+{t:"Artists played more on YouTube than Spotify",c:"Aggregation",d:4,p:"CASE flags each track, then HAVING compares the two sums per artist.",s:"with my_cte as (\n  select *,\n    case when most_playedon = 'youtube' then 1 else 0 end as youtube,\n    case when most_playedon = 'spotify' then 1 else 0 end as spotify\n  from spotify\n)\nselect artist, sum(youtube), sum(spotify)\nfrom my_cte\ngroup by artist\nhaving sum(youtube) > sum(spotify);"},
+{t:"Rolling average of streams per artist",c:"Window functions",d:5,p:"A running average, ordered by track name inside each artist.",s:"select *,\n  avg(stream) over (\n    partition by artist\n    order by track\n    rows between unbounded preceding and current row\n  ) as rolling_avg\nfrom spotify;"},
+{t:"Danceability buckets with counts",c:"Subqueries",d:3,p:"Labels tracks High, Medium or Low, then counts each group. Above 0.7 is high and above 0.5 is medium.",s:"with my_cte as (\n  select *,\n    case when danceability > 0.7 then 'high'\n         when danceability > .5 then 'medium'\n         else 'low' end as dance_status\n  from spotify\n)\nselect dance_status, count(*)\nfrom my_cte\ngroup by dance_status;"}
+];
+var KW=/\b(select|distinct|from|where|group by|order by|having|with|as|and|or|case|when|then|else|end|over|partition by|rows between|unbounded preceding|and current row|desc)\b/gi;
+var D=[
+{o:"One row with one number: the total tracks loaded.",k:"COUNT(*)",s:["Reads every row in spotify.","COUNT(*) counts rows, including rows with empty values."],n:"Run this right after the import. If the count is lower than the CSV, some rows were rejected."},
+{o:"Every column for each track above the stream threshold.",k:"WHERE filter",s:["Checks the stream value on each row.","Keeps rows where stream is greater than the number."],n:"One million has six zeros and one billion has nine, so this returns far more than the label promises.",f:"select track, artist, stream\nfrom spotify\nwhere stream > 1000000000\norder by stream desc;"},
+{o:"Each unique artist and album pair.",k:"DISTINCT",s:["Reads artist and album for every track.","DISTINCT drops repeated pairs, so an album with ten tracks shows once."],n:"Add order by artist to make the list easier to scan."},
+{o:"A single number: all comments on licensed videos.",k:"SUM with a filter",s:["Keeps rows where licensed equals True.","Adds up the comments column across those rows."],n:"SUM skips empty values. It returns NULL, not 0, when no row matches. Write sum( with no space before the bracket.",f:"select sum(comments) as total_comments\nfrom spotify\nwhere licensed = 'True';"},
+{o:"All columns for tracks released as singles.",k:"WHERE with text",s:["Compares album_type to the text single.","Keeps only the matching rows."],n:"Check the spelling in your data with select distinct album_type from spotify."},
+{o:"One row per artist with their track count.",k:"GROUP BY + COUNT",s:["Puts all tracks by the same artist in one group.","COUNT(*) counts the rows in each group."],n:"Sorting by the count shows the most prolific artists first.",f:"select artist, count(*) as tracks\nfrom spotify\ngroup by artist\norder by tracks desc;"},
+{o:"One row per album with its average danceability.",k:"GROUP BY + AVG",s:["Groups tracks by album.","AVG averages danceability within each group."],n:"Albums with one track just repeat that track’s value. Add having count(*) > 1 to skip them."},
+{o:"The five tracks with the highest energy, plus any ties.",k:"RANK() in a CTE",s:["The CTE adds a my_rank column, ordered by energy from high to low.","The outer query keeps rows where my_rank is 5 or less."],n:"Tied tracks share a rank, so you can get more than five rows. If you want exactly five, use LIMIT.",f:"select *\nfrom spotify\norder by energy desc\nlimit 5;"},
+{o:"Official videos where views are higher than likes.",k:"Two conditions with AND",s:["Keeps rows where official_video is True.","Then keeps rows where views are greater than likes."],n:"Almost every video has more views than likes, so this returns nearly everything. A like rate is more useful.",f:"select track, views, likes,\n  round(likes / views * 100, 2) as like_pct\nfrom spotify\nwhere official_video = 'True' and views > 0\norder by like_pct desc;"},
+{o:"Tracks whose liveness is above the overall average.",k:"Subquery",s:["The inner query calculates one average across the whole table.","The outer query keeps rows above that number."],n:"The subquery runs once, not once per row, so this is fast even on large tables."},
+{o:"Per artist: highest energy, lowest energy and the gap.",k:"MAX, MIN and arithmetic",s:["Groups tracks by artist.","Takes the max and min energy in each group.","Subtracts one from the other."],n:"An artist with one track always shows a gap of 0. Sort by difference desc to see the widest range."},
+{o:"Tracks where the energy_liveness value is above 1.2.",k:"Filter on a derived column",s:["Reads the precomputed energy_liveness column.","Keeps rows above 1.2."],n:"The file doesn’t show how this column is calculated, so check the source CSV before reading much into it."},
+{o:"Each artist’s three most viewed tracks.",k:"DENSE_RANK() with PARTITION BY",s:["PARTITION BY artist restarts the ranking for each artist.","Within each artist, tracks are ranked by views from high to low.","The outer query keeps ranks 1 to 3."],n:"DENSE_RANK gives ties the same rank without skipping numbers, so an artist can return more than three rows. Use ROW_NUMBER for exactly three."},
+{o:"Artists with more YouTube-first tracks than Spotify-first tracks.",k:"CASE flags + HAVING",s:["CASE adds a 1 or 0 flag for each platform on every track.","The outer query adds the flags per artist.","HAVING keeps artists where YouTube’s total is bigger."],n:"HAVING filters after grouping, which WHERE can’t do. The match on 'youtube' and 'spotify' must be exact."},
+{o:"Every track with a running average of streams for its artist.",k:"Window frame",s:["PARTITION BY artist gives each artist its own running window.","ORDER BY track sorts tracks alphabetically.","The frame runs from the first row to the current one, so the average grows track by track."],n:"Alphabetical order isn’t chronological. This table has no release date, so the trend isn’t a true timeline."},
+{o:"A count of tracks in the high, medium and low danceability groups.",k:"CASE bucketing",s:["CASE labels each track: above 0.7 is high, above 0.5 is medium, the rest are low.","The outer query counts tracks per label."],n:"The cut-offs are exclusive, so a track at exactly 0.5 lands in low. Percentages make the split easier to read.",f:"with my_cte as (\n  select case when danceability > 0.7 then 'high'\n             when danceability > 0.5 then 'medium'\n             else 'low' end as dance_status\n  from spotify\n)\nselect dance_status, count(*) as tracks,\n  round(count(*) * 100 / sum(count(*)) over (), 1) as pct\nfrom my_cte\ngroup by dance_status;"}
+];
+function extra(i){var d=D[i];if(!d)return"";var h='<div class="meta"><div><h4>What comes back</h4><p>'+esc(d.o)+'</p></div><div><h4>Concept</h4><p>'+esc(d.k)+'</p></div></div><h4>How it works</h4><ol>'+d.s.map(function(s){return"<li>"+esc(s)+"</li>"}).join("")+'</ol><p class="tip">'+esc(d.n)+'</p>';if(d.f)h+='<h4>Improved version</h4><pre><code>'+hl(d.f)+'</code></pre>';return h}
+function esc(x){return x.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function hl(sql){
+  var out=[],re=/('[^']*')|(\b\d[\d.]*\b|\.\d+)|(\b(?:count|sum|avg|max|min|rank|dense_rank)\b(?=\s*\())|(\b(?:select|distinct|from|where|group by|order by|having|with|as|and|or|case|when|then|else|end|over|partition by|rows between|unbounded preceding|current row|desc)\b)/gi,last=0,m;
+  while((m=re.exec(sql))){
+    out.push(esc(sql.slice(last,m.index)));
+    var cls=m[1]?"s":m[2]?"n":m[3]?"f":"k";
+    out.push('<span class="'+cls+'">'+esc(m[0])+'</span>');
+    last=re.lastIndex;
+  }
+  out.push(esc(sql.slice(last)));
+  return out.join("");
+}
+var cats=["All"].concat(Array.from(new Set(Q.map(function(x){return x.c}))));
+var cur="All",term="";
+var list=document.getElementById("list"),chips=document.getElementById("chips"),eq=document.getElementById("eq");
+Q.forEach(function(x,i){
+  var a=document.createElement("a");a.href="#q"+(i+1);a.style.height=(24+x.d*14)+"px";
+  a.title=(i+1)+". "+x.t;a.setAttribute("aria-label",(i+1)+". "+x.t);
+  a.addEventListener("click",function(){var d=document.getElementById("q"+(i+1));if(d){cur="All";term="";document.getElementById("q").value="";render();d=document.getElementById("q"+(i+1));d.open=true}});
+  eq.appendChild(a);
+});
+function drawChips(){
+  chips.innerHTML="";
+  cats.forEach(function(c){
+    var b=document.createElement("button");b.className="chip";b.textContent=c;b.setAttribute("aria-pressed",c===cur);
+    b.onclick=function(){cur=c;drawChips();render()};chips.appendChild(b);
+  });
+}
+function render(){
+  var html="",n=0;
+  Q.forEach(function(x,i){
+    if(cur!=="All"&&x.c!==cur)return;
+    if(term&&(x.t+" "+x.p+" "+x.s).toLowerCase().indexOf(term)<0)return;
+    n++;
+    html+='<details id="q'+(i+1)+'"><summary><span class="t">'+(i+1)+". "+esc(x.t)+'</span><span class="tag">'+x.c+'</span></summary><div class="body"><p>'+esc(x.p)+'</p><div class="codewrap"><button class="copy" data-i="'+i+'">Copy</button><pre><code>'+hl(x.s)+'</code></pre></div>'+extra(i)+'</div></details>';
+  });
+  list.innerHTML=html||'<div class="empty">No queries match. Clear the search or pick All.</div>';
+}
+list.addEventListener("click",function(e){
+  var b=e.target.closest(".copy");if(!b)return;
+  var s=Q[+b.dataset.i].s;
+  var done=function(){b.textContent="Copied";setTimeout(function(){b.textContent="Copy"},1400)};
+  try{navigator.clipboard.writeText(s).then(done,function(){b.textContent="Select text"})}catch(err){b.textContent="Select text"}
+});
+document.getElementById("q").addEventListener("input",function(e){term=e.target.value.trim().toLowerCase();render()});
+drawChips();render();
+if(location.hash){var t=document.getElementById(location.hash.slice(1));if(t&&t.tagName==="DETAILS")t.open=true}
+</script>
+</body>
+</html>
